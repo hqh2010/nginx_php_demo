@@ -1,0 +1,72 @@
+# 安装php
+sudo apt install php7.3 php7.3-cgi php7.3-fpm php7.3-dba php7.3-gd php-zip php-mbstring php-mysql php-xml php-curl php-redis php-bcmath
+
+# 安装mysql
+sudo apt install ./mysql-apt-config_0.8.13-1_all.deb
+sudo apt-key del A4A9406876FCBD3C456770C88C718D3B5072E1F5
+sudo apt-key adv --keyserver pgp.mit.edu --recv-keys 467B942D3A79BD29
+sudo apt update
+sudo apt install mysql-server
+
+# 安装nginx
+sudo apt install nginx
+
+# 安装composer
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+composer --version
+
+# nginx默认根目录
+/var/www/html
+
+cat -n /etc/php/7.3/fpm/pool.d/www.conf | grep listen
+将 listen = /run/php/php7.3-fpm.sock 改为 listen = 127.0.0.1:9000
+
+# fpm进程的用户名
+uos@uos:/etc/php/7.3/fpm/pool.d$ id www-data
+uid=33(www-data) gid=33(www-data) 组=33(www-data)
+
+# nginx错误日志目录
+/var/log/nginx/
+
+# 重启nginx服务
+sudo systemctl restart nginx.service
+# 重启fpm
+sudo systemctl restart php7.3-fpm.service
+
+问题集：
+虽然nginx -t查询出来的配置目录为
+uos@uos:~/Desktop$ sudo nginx -t
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+但是实际起使用的还是 /etc/nginx/sites-enabled/default 配置文件
+
+2.网站根目录需要设置权限
+sudo chmod -R 777 public
+
+3. Nginx: stat() failed (13: permission denied)
+
+uos@uos:/etc/nginx/sites-enabled$ sudo -u www-data stat ~/Desktop/yoshop2.0-master/yoshop2.0-master/public
+stat: 无法获取'/home/uos/Desktop/yoshop2.0-master/yoshop2.0-master/public' 的文件状态(stat): 权限不够
+
+nginx 是以用户www-data启动的，但是网站根目录的用户是uos，需要将用户www-data加到uos组
+sudo gpasswd -a www-data uos
+
+4. 修改了nginx根目录后，需要修改php的配置
+/etc/php/7.3/fpm/php.ini:745:doc_root ="/var/www/html"
+
+
+# 荧火商城搭建
+https://www.cnblogs.com/hey-zero/p/16251191.html
+
+# Nginx: stat() failed (13: permission denied)
+https://www.jianshu.com/p/61dc693a51f1?utm_campaign=maleskine&utm_content=note&utm_medium=seo_notes&utm_source=recommendation
+
+
+docker-compose 改动dockerfile后, 要使用docker-compose　build
+
+# 启动服务
+docker-compose　up -d
+# 停止服务
+docker-compose　down
+
